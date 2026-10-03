@@ -15,20 +15,7 @@ export class App {
 
         this.express.use(express.json({ limit: '200mb' }));
         this.express.use(cors({
-            origin: (origin, callback) => {
-                // Allow localhost and frontend URL
-                const allowedOrigins = [env.FRONT_URL];
-                const isLocalDevelopmentOrigin = origin
-                    ? /^https?:\/\/localhost:\d+$/.test(origin) || /^https?:\/\/127\.0\.0\.1:\d+$/.test(origin)
-                    : false;
-
-                if (isLocalDevelopmentOrigin || origin && allowedOrigins.includes(origin)) {
-                    callback(null, true);
-                    return;
-                }
-
-                callback(new Error('Origin not allowed by CORS'));
-            },
+            origin: '*',
             methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
             allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'access-token']
         }));
