@@ -8,7 +8,8 @@ const env = cleanEnv(process.env, {
     API_URL: str(),
     FRONT_URL: str(),
 
-    MONGODB_URI: str(),
+    DATABASE_URL: str({ default: 'postgresql://postgres:postgres@localhost:5432/rtut_dev' }),
+    MONGODB_URI: str({ default: '' }),
 
     SECRET_KEY: str(),
 

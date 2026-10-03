@@ -1,12 +1,14 @@
-import { model, models, Schema, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
+import { createModelAdapter } from '../utils/sequelize-query-helper';
 
 export type TransactionType = 'ENERGY_PAYMENT' | 'WALLET_RECHARGE' | 'P2P_TRANSACTION' | 'REFUND';
 export type TransactionStatus = 'SUCCESS' | 'PENDING' | 'FAILED';
 
-export interface TransactionDocument {
-    _id: Types.ObjectId;
+export interface TransactionAttributes {
+    id: string;
     transactionId: string;
-    userId?: Types.ObjectId;
+    userId?: string;
     userName?: string;
     userEmail?: string;
     type: TransactionType;
@@ -17,38 +19,104 @@ export interface TransactionDocument {
     txHash?: string;
     description?: string;
     metadata?: Record<string, any>;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
-const transactionSchema = new Schema<TransactionDocument>(
+export interface TransactionCreationAttributes extends Optional<TransactionAttributes, 'id' | 'energyUnits' | 'status' | 'paymentMethod'> {}
+
+export class TransactionModel extends Model<TransactionAttributes, TransactionCreationAttributes> implements TransactionAttributes {
+    public id!: string;
+    public transactionId!: string;
+    public userId?: string;
+    public userName?: string;
+    public userEmail?: string;
+    public type!: TransactionType;
+    public amount!: number;
+    public energyUnits!: number;
+    public status!: TransactionStatus;
+    public paymentMethod!: string;
+    public txHash?: string;
+    public description?: string;
+    public metadata?: Record<string, any>;
+    public readonly createdAt!: Date;
+    public readonly updatedAt!: Date;
+
+    public get _id(): string {
+        return this.id;
+    }
+
+    public toJSON(): any {
+        const values: any = { ...this.get() };
+        values._id = values.id;
+        return values;
+    }
+}
+
+TransactionModel.init(
     {
-        transactionId: { type: String, required: true, unique: true, index: true },
-        userId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
-        userName: { type: String },
-        userEmail: { type: String },
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        transactionId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
+        userId: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        userName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        userEmail: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
         type: {
-            type: String,
-            enum: ['ENERGY_PAYMENT', 'WALLET_RECHARGE', 'P2P_TRANSACTION', 'REFUND'],
-            required: true,
-            index: true,
+            type: DataTypes.STRING,
+            allowNull: false,
         },
-        amount: { type: Number, required: true },
-        energyUnits: { type: Number, default: 0 },
+        amount: {
+            type: DataTypes.FLOAT,
+            allowNull: false,
+        },
+        energyUnits: {
+            type: DataTypes.FLOAT,
+            defaultValue: 0,
+        },
         status: {
-            type: String,
-            enum: ['SUCCESS', 'PENDING', 'FAILED'],
-            default: 'SUCCESS',
-            index: true,
+            type: DataTypes.STRING,
+            defaultValue: 'SUCCESS',
         },
-        paymentMethod: { type: String, default: 'UPI' },
-        txHash: { type: String },
-        description: { type: String },
-        metadata: { type: Schema.Types.Mixed },
+        paymentMethod: {
+            type: DataTypes.STRING,
+            defaultValue: 'UPI',
+        },
+        txHash: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        metadata: {
+            type: DataTypes.JSONB,
+            allowNull: true,
+        },
     },
-    { timestamps: true }
+    {
+        sequelize,
+        tableName: 'transactions',
+        timestamps: true,
+    }
 );
 
-const Transaction = models.Transaction || model<TransactionDocument>('Transaction', transactionSchema);
-
+export const Transaction: any = createModelAdapter<TransactionModel>(TransactionModel);
+export type Transaction = TransactionModel;
 export default Transaction;

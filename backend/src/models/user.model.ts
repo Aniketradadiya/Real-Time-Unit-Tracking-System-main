@@ -1,7 +1,9 @@
-import { model, models, Schema, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
+import { createModelAdapter } from '../utils/sequelize-query-helper';
 
-export interface UserDocument {
-    _id: Types.ObjectId;
+export interface UserAttributes {
+    id: string;
     name?: string;
     email?: string;
     password?: string;
@@ -12,34 +14,118 @@ export interface UserDocument {
     status: 'ACTIVE' | 'INACTIVE';
     lastActive?: Date;
     isDeleted: boolean;
-    createdBy?: Types.ObjectId;
-    updatedBy?: Types.ObjectId;
-    deletedBy?: Types.ObjectId;
+    createdBy?: string;
+    updatedBy?: string;
+    deletedBy?: string;
     deletedAt?: Date;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
-const userSchema = new Schema<UserDocument>(
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'energyLimit' | 'role' | 'status' | 'isDeleted'> {}
+
+export class UserModel extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+    public id!: string;
+    public name?: string;
+    public email?: string;
+    public password?: string;
+    public mobile?: string;
+    public address?: string;
+    public energyLimit!: number;
+    public role!: 'USER' | 'ADMIN';
+    public status!: 'ACTIVE' | 'INACTIVE';
+    public lastActive?: Date;
+    public isDeleted!: boolean;
+    public createdBy?: string;
+    public updatedBy?: string;
+    public deletedBy?: string;
+    public deletedAt?: Date;
+    public readonly createdAt!: Date;
+    public readonly updatedAt!: Date;
+
+    public get _id(): string {
+        return this.id;
+    }
+
+    public toJSON(): any {
+        const values: any = { ...this.get() };
+        values._id = values.id;
+        return values;
+    }
+}
+
+UserModel.init(
     {
-        name: { type: String },
-        email: { type: String, lowercase: true, trim: true },
-        password: { type: String },
-        mobile: { type: String },
-        address: { type: String },
-        energyLimit: { type: Number, default: 1 },
-        role: { type: String, enum: ['USER', 'ADMIN'], default: 'USER' },
-        status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' },
-        lastActive: { type: Date, default: Date.now },
-        isDeleted: { type: Boolean, default: false },
-        createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
-        updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
-        deletedBy: { type: Schema.Types.ObjectId, ref: 'User' },
-        deletedAt: { type: Date },
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,
+        },
+        password: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        mobile: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        address: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        energyLimit: {
+            type: DataTypes.FLOAT,
+            defaultValue: 1.0,
+        },
+        role: {
+            type: DataTypes.ENUM('USER', 'ADMIN'),
+            defaultValue: 'USER',
+        },
+        status: {
+            type: DataTypes.ENUM('ACTIVE', 'INACTIVE'),
+            defaultValue: 'ACTIVE',
+        },
+        lastActive: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+        isDeleted: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        createdBy: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        updatedBy: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        deletedBy: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        deletedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     },
-    { timestamps: true }
+    {
+        sequelize,
+        tableName: 'users',
+        timestamps: true,
+    }
 );
 
-const User = models.User || model<UserDocument>('User', userSchema);
-
+export const User: any = createModelAdapter<UserModel>(UserModel);
+export type User = UserModel;
 export default User;

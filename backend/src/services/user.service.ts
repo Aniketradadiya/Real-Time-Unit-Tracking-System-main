@@ -21,7 +21,7 @@ const findUserById = async (userId: string) => {
 const updateUser = async (userId: string, updateData: UserPayload, updatedBy?: string | null) => {
   const updateObj: any = { ...updateData, updatedAt: new Date() };
   if (updatedBy) updateObj.updatedBy = updatedBy;
-  return await User.findByIdAndUpdate(userId, updateObj, { new: true }).exec();
+  return await User.findByIdAndUpdate(userId, updateObj);
 };
 
 /** Create a new user */

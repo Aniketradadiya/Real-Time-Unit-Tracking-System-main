@@ -1,43 +1,101 @@
-import { model, models, Schema, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
+import { createModelAdapter } from '../utils/sequelize-query-helper';
 
-export interface DeviceDocument {
-    _id: Types.ObjectId;
+export interface DeviceAttributes {
+    id: string;
     deviceId: string;
-    userId: Types.ObjectId;
+    userId: string;
     deviceName: string;
-    location: string;
-    deviceType: 'METER' | 'EQUIPMENT'; // Smart meter or appliance
-    status: 'ACTIVE' | 'INACTIVE' | 'FAULT'; // Current status
-    lastHeartbeat: Date; // Last data received
-    powerThreshold: number; // Max power in watts for this device
+    location?: string;
+    deviceType: 'METER' | 'EQUIPMENT';
+    status: 'ACTIVE' | 'INACTIVE' | 'FAULT';
+    lastHeartbeat: Date;
+    powerThreshold: number;
     isDeleted: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
-const deviceSchema = new Schema<DeviceDocument>(
+export interface DeviceCreationAttributes extends Optional<DeviceAttributes, 'id' | 'deviceType' | 'status' | 'lastHeartbeat' | 'powerThreshold' | 'isDeleted'> {}
+
+export class DeviceModel extends Model<DeviceAttributes, DeviceCreationAttributes> implements DeviceAttributes {
+    public id!: string;
+    public deviceId!: string;
+    public userId!: string;
+    public deviceName!: string;
+    public location?: string;
+    public deviceType!: 'METER' | 'EQUIPMENT';
+    public status!: 'ACTIVE' | 'INACTIVE' | 'FAULT';
+    public lastHeartbeat!: Date;
+    public powerThreshold!: number;
+    public isDeleted!: boolean;
+    public readonly createdAt!: Date;
+    public readonly updatedAt!: Date;
+
+    public get _id(): string {
+        return this.id;
+    }
+
+    public toJSON(): any {
+        const values: any = { ...this.get() };
+        values._id = values.id;
+        return values;
+    }
+}
+
+DeviceModel.init(
     {
-        deviceId: { type: String, required: true, unique: true }, // ESP32 Device ID
-        userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-        deviceName: { type: String, required: true },
-        location: { type: String },
-        deviceType: { 
-            type: String, 
-            enum: ['METER', 'EQUIPMENT'], 
-            default: 'EQUIPMENT' 
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
         },
-        status: { 
-            type: String, 
-            enum: ['ACTIVE', 'INACTIVE', 'FAULT'], 
-            default: 'ACTIVE' 
+        deviceId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
         },
-        lastHeartbeat: { type: Date, default: Date.now },
-        powerThreshold: { type: Number, default: 3000 }, // Default 3000W threshold
-        isDeleted: { type: Boolean, default: false },
+        userId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        deviceName: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        location: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        deviceType: {
+            type: DataTypes.ENUM('METER', 'EQUIPMENT'),
+            defaultValue: 'EQUIPMENT',
+        },
+        status: {
+            type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'FAULT'),
+            defaultValue: 'ACTIVE',
+        },
+        lastHeartbeat: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+        powerThreshold: {
+            type: DataTypes.FLOAT,
+            defaultValue: 3000.0,
+        },
+        isDeleted: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
     },
-    { timestamps: true }
+    {
+        sequelize,
+        tableName: 'devices',
+        timestamps: true,
+    }
 );
 
-const Device = models.Device || model<DeviceDocument>('Device', deviceSchema);
-
+export const Device: any = createModelAdapter<DeviceModel>(DeviceModel);
+export type Device = DeviceModel;
 export default Device;

@@ -1,12 +1,14 @@
-import { model, models, Schema, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
+import { createModelAdapter } from '../utils/sequelize-query-helper';
 
 export type AlertType = 'DEVICE_OFFLINE' | 'HIGH_POWER' | 'ABNORMAL_BILL' | 'DEVICE_FAULT' | 'ENERGY_LIMIT';
 export type AlertSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type AlertStatus = 'ACTIVE' | 'RESOLVED' | 'ACKNOWLEDGED';
 
-export interface AlertDocument {
-    _id: Types.ObjectId;
-    userId: Types.ObjectId;
+export interface AlertAttributes {
+    id: string;
+    userId: string;
     deviceId: string;
     deviceName: string;
     alertType: AlertType;
@@ -14,48 +16,143 @@ export interface AlertDocument {
     status: AlertStatus;
     title: string;
     message: string;
-    value?: number; // Current power value, bill amount, etc.
-    threshold?: number; // What was the threshold
+    value?: number;
+    threshold?: number;
     detectedAt: Date;
     resolvedAt?: Date;
     isRead: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
-const alertSchema = new Schema<AlertDocument>(
+export interface AlertCreationAttributes extends Optional<AlertAttributes, 'id' | 'severity' | 'status' | 'detectedAt' | 'isRead'> {}
+
+export class AlertModel extends Model<AlertAttributes, AlertCreationAttributes> implements AlertAttributes {
+    public id!: string;
+    public userId!: string;
+    public deviceId!: string;
+    public deviceName!: string;
+    public alertType!: AlertType;
+    public severity!: AlertSeverity;
+    public status!: AlertStatus;
+    public title!: string;
+    public message!: string;
+    public value?: number;
+    public threshold?: number;
+    public detectedAt!: Date;
+    public resolvedAt?: Date;
+    public isRead!: boolean;
+    public readonly createdAt!: Date;
+    public readonly updatedAt!: Date;
+
+    public get _id(): string {
+        return this.id;
+    }
+
+    public toJSON(): any {
+        const values: any = { ...this.get() };
+        values._id = values.id;
+        return values;
+    }
+}
+
+AlertModel.init(
     {
-        userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-        deviceId: { type: String, required: true, index: true },
-        deviceName: { type: String, required: true },
-        alertType: { 
-            type: String, 
-            enum: ['DEVICE_OFFLINE', 'HIGH_POWER', 'ABNORMAL_BILL', 'DEVICE_FAULT', 'ENERGY_LIMIT'],
-            required: true,
-            index: true
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
         },
-        severity: { 
-            type: String, 
-            enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
-            default: 'MEDIUM'
+        userId: {
+            type: DataTypes.STRING,
+            allowNull: false,
         },
-        status: { 
-            type: String, 
-            enum: ['ACTIVE', 'RESOLVED', 'ACKNOWLEDGED'],
-            default: 'ACTIVE',
-            index: true
+        deviceId: {
+            type: DataTypes.STRING,
+            allowNull: false,
         },
-        title: { type: String, required: true },
-        message: { type: String, required: true },
-        value: { type: Number }, // Current detected value
-        threshold: { type: Number }, // Configured threshold
-        detectedAt: { type: Date, default: Date.now },
-        resolvedAt: { type: Date },
-        isRead: { type: Boolean, default: false, index: true },
+        deviceName: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        alertType: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        severity: {
+            type: DataTypes.STRING,
+            defaultValue: 'MEDIUM',
+        },
+        status: {
+            type: DataTypes.STRING,
+            defaultValue: 'ACTIVE',
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        message: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        value: {
+            type: DataTypes.FLOAT,
+            allowNull: true,
+        },
+        threshold: {
+            type: DataTypes.FLOAT,
+            allowNull: true,
+        },
+        detectedAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+        resolvedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        isRead: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
     },
-    { timestamps: true }
+    {
+        sequelize,
+        tableName: 'alerts',
+        timestamps: true,
+    }
 );
 
-const Alert = models.Alert || model<AlertDocument>('Alert', alertSchema);
+export const Alert: any = createModelAdapter<AlertModel>(AlertModel);
 
+// Specialized aggregate method for dashboard and stats
+Alert.aggregate = async function (_pipeline: any[]): Promise<any[]> {
+    const alerts = await AlertModel.findAll();
+
+    const byTypeMap = new Map<string, number>();
+    const bySeverityMap = new Map<string, number>();
+    let activeCount = 0;
+    let unresolvedCount = 0;
+
+    alerts.forEach((a) => {
+        byTypeMap.set(a.alertType, (byTypeMap.get(a.alertType) || 0) + 1);
+        bySeverityMap.set(a.severity, (bySeverityMap.get(a.severity) || 0) + 1);
+        if (a.status === 'ACTIVE') activeCount++;
+        if (a.status === 'ACTIVE' || a.status === 'ACKNOWLEDGED') unresolvedCount++;
+    });
+
+    const byType = Array.from(byTypeMap.entries()).map(([_id, count]) => ({ _id, count }));
+    const bySeverity = Array.from(bySeverityMap.entries()).map(([_id, count]) => ({ _id, count }));
+
+    return [
+        {
+            byType,
+            bySeverity,
+            activeCount: [{ count: activeCount }],
+            unresolvedCount: [{ count: unresolvedCount }],
+        },
+    ];
+};
+
+export type Alert = AlertModel;
 export default Alert;

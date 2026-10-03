@@ -1,79 +1,149 @@
-import { model, models, Schema, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
+import { createModelAdapter } from '../utils/sequelize-query-helper';
 
-export interface SystemSettingDocument {
-    _id: Types.ObjectId;
+export interface SystemSettingAttributes {
+    id: string;
     key: string;
     systemName: string;
-    energyMonitoringInterval: number; // in seconds
-    defaultEnergyLimit: number; // in kWh
-    tariffRatePerKwh: number; // in INR
-    alertThresholds: {
+    energyMonitoringInterval: number;
+    defaultEnergyLimit: number;
+    tariffRatePerKwh: number;
+    alertThresholds?: {
         highPowerThresholdWatts: number;
         offlineTimeoutMinutes: number;
         criticalPowerThresholdWatts: number;
     };
-    userSettings: {
+    userSettings?: {
         allowRegistration: boolean;
         defaultRole: 'USER' | 'ADMIN';
         requireEmailVerification: boolean;
     };
-    deviceSettings: {
+    deviceSettings?: {
         deviceTimeoutSeconds: number;
         offlineThresholdMinutes: number;
         dataRefreshIntervalSeconds: number;
     };
-    alertSettings: {
+    alertSettings?: {
         enableAlerts: boolean;
         criticalAlertThreshold: number;
         notifyEmail: boolean;
         notifyPush: boolean;
     };
-    securitySettings: {
+    securitySettings?: {
         sessionTimeoutMinutes: number;
         requireStrongPassword: boolean;
         maxFailedLogins: number;
     };
-    updatedAt: Date;
-    createdAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
-const systemSettingSchema = new Schema<SystemSettingDocument>(
+export interface SystemSettingCreationAttributes extends Optional<SystemSettingAttributes, 'id' | 'key' | 'systemName' | 'energyMonitoringInterval' | 'defaultEnergyLimit' | 'tariffRatePerKwh'> {}
+
+export class SystemSettingModel extends Model<SystemSettingAttributes, SystemSettingCreationAttributes> implements SystemSettingAttributes {
+    public id!: string;
+    public key!: string;
+    public systemName!: string;
+    public energyMonitoringInterval!: number;
+    public defaultEnergyLimit!: number;
+    public tariffRatePerKwh!: number;
+    public alertThresholds?: any;
+    public userSettings?: any;
+    public deviceSettings?: any;
+    public alertSettings?: any;
+    public securitySettings?: any;
+    public readonly createdAt!: Date;
+    public readonly updatedAt!: Date;
+
+    public get _id(): string {
+        return this.id;
+    }
+
+    public toJSON(): any {
+        const values: any = { ...this.get() };
+        values._id = values.id;
+        return values;
+    }
+}
+
+SystemSettingModel.init(
     {
-        key: { type: String, default: 'primary', unique: true },
-        systemName: { type: String, default: 'GridOS Real-Time Energy Tracking' },
-        energyMonitoringInterval: { type: Number, default: 5 },
-        defaultEnergyLimit: { type: Number, default: 25 },
-        tariffRatePerKwh: { type: Number, default: 6.0 },
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        key: {
+            type: DataTypes.STRING,
+            defaultValue: 'primary',
+            unique: true,
+        },
+        systemName: {
+            type: DataTypes.STRING,
+            defaultValue: 'GridOS Real-Time Energy Tracking',
+        },
+        energyMonitoringInterval: {
+            type: DataTypes.INTEGER,
+            defaultValue: 5,
+        },
+        defaultEnergyLimit: {
+            type: DataTypes.FLOAT,
+            defaultValue: 25,
+        },
+        tariffRatePerKwh: {
+            type: DataTypes.FLOAT,
+            defaultValue: 6.0,
+        },
         alertThresholds: {
-            highPowerThresholdWatts: { type: Number, default: 3000 },
-            offlineTimeoutMinutes: { type: Number, default: 5 },
-            criticalPowerThresholdWatts: { type: Number, default: 5000 },
+            type: DataTypes.JSONB,
+            defaultValue: {
+                highPowerThresholdWatts: 3000,
+                offlineTimeoutMinutes: 5,
+                criticalPowerThresholdWatts: 5000,
+            },
         },
         userSettings: {
-            allowRegistration: { type: Boolean, default: true },
-            defaultRole: { type: String, enum: ['USER', 'ADMIN'], default: 'USER' },
-            requireEmailVerification: { type: Boolean, default: false },
+            type: DataTypes.JSONB,
+            defaultValue: {
+                allowRegistration: true,
+                defaultRole: 'USER',
+                requireEmailVerification: false,
+            },
         },
         deviceSettings: {
-            deviceTimeoutSeconds: { type: Number, default: 300 },
-            offlineThresholdMinutes: { type: Number, default: 5 },
-            dataRefreshIntervalSeconds: { type: Number, default: 2 },
+            type: DataTypes.JSONB,
+            defaultValue: {
+                deviceTimeoutSeconds: 300,
+                offlineTimeoutMinutes: 5,
+                dataRefreshIntervalSeconds: 2,
+            },
         },
         alertSettings: {
-            enableAlerts: { type: Boolean, default: true },
-            criticalAlertThreshold: { type: Number, default: 4500 },
-            notifyEmail: { type: Boolean, default: true },
-            notifyPush: { type: Boolean, default: true },
+            type: DataTypes.JSONB,
+            defaultValue: {
+                enableAlerts: true,
+                criticalAlertThreshold: 4500,
+                notifyEmail: true,
+                notifyPush: true,
+            },
         },
         securitySettings: {
-            sessionTimeoutMinutes: { type: Number, default: 1440 },
-            requireStrongPassword: { type: Boolean, default: true },
-            maxFailedLogins: { type: Number, default: 5 },
+            type: DataTypes.JSONB,
+            defaultValue: {
+                sessionTimeoutMinutes: 1440,
+                requireStrongPassword: true,
+                maxFailedLogins: 5,
+            },
         },
     },
-    { timestamps: true }
+    {
+        sequelize,
+        tableName: 'system_settings',
+        timestamps: true,
+    }
 );
 
-const SystemSetting = models.SystemSetting || model<SystemSettingDocument>('SystemSetting', systemSettingSchema);
-
+export const SystemSetting: any = createModelAdapter<SystemSettingModel>(SystemSettingModel);
+export type SystemSetting = SystemSettingModel;
 export default SystemSetting;

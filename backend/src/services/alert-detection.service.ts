@@ -1,4 +1,3 @@
-import { Types } from 'mongoose';
 import Alert, { AlertType, AlertSeverity } from '../models/alert.model';
 import Device from '../models/device.model';
 import Telemetry from '../models/telemetry.model';
@@ -39,13 +38,13 @@ class AlertDetectionService {
         }
     ) {
         try {
-            // Resolve a valid ObjectId for userId
-            let resolvedUserId: Types.ObjectId;
-            if (userId && Types.ObjectId.isValid(userId)) {
-                resolvedUserId = new Types.ObjectId(userId);
+            // Resolve a valid userId
+            let resolvedUserId: string;
+            if (userId && userId !== 'admin' && userId.length >= 8) {
+                resolvedUserId = userId;
             } else {
                 const device = await Device.findOne({ deviceId });
-                if (device?.userId && Types.ObjectId.isValid(device.userId)) {
+                if (device?.userId) {
                     resolvedUserId = device.userId;
                 } else {
                     let user = await User.findOne({ isDeleted: false });
@@ -56,7 +55,7 @@ class AlertDetectionService {
                             energyLimit: 100,
                         });
                     }
-                    resolvedUserId = user._id;
+                    resolvedUserId = user._id || user.id;
                 }
             }
 

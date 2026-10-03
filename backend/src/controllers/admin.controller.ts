@@ -48,7 +48,7 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
         let onlineDevicesCount = 0;
         let offlineDevicesCount = 0;
 
-        devices.forEach((d) => {
+        devices.forEach((d: any) => {
             const isOnline = d.lastHeartbeat && new Date(d.lastHeartbeat) > fiveMinutesAgo;
             if (isOnline) onlineDevicesCount++;
             else offlineDevicesCount++;
@@ -86,7 +86,7 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
 
         const recentActivity: any[] = [];
 
-        recentUsers.forEach((u) => {
+        recentUsers.forEach((u: any) => {
             recentActivity.push({
                 id: `u-${u._id}`,
                 type: 'USER_REGISTRATION',
@@ -97,7 +97,7 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
             });
         });
 
-        recentAlerts.forEach((a) => {
+        recentAlerts.forEach((a: any) => {
             recentActivity.push({
                 id: `a-${a._id}`,
                 type: 'ALERT',
@@ -108,7 +108,7 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
             });
         });
 
-        recentTxs.forEach((tx) => {
+        recentTxs.forEach((tx: any) => {
             recentActivity.push({
                 id: `tx-${tx._id}`,
                 type: 'TRANSACTION',
@@ -119,7 +119,7 @@ export const getDashboardOverview = async (req: Request, res: Response) => {
             });
         });
 
-        recentLogs.forEach((l) => {
+        recentLogs.forEach((l: any) => {
             recentActivity.push({
                 id: `l-${l._id}`,
                 type: 'LOG',
@@ -430,7 +430,7 @@ export const getDevices = async (_req: Request, res: Response) => {
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
         const persistentEnergy = getPersistentEnergy();
 
-        const enrichedDevices = devices.map((d) => {
+        const enrichedDevices = devices.map((d: any) => {
             const isRecent = d.lastHeartbeat && new Date(d.lastHeartbeat) > fiveMinutesAgo;
             let connectionStatus = 'DISCONNECTED';
             if (isRecent) {
@@ -629,7 +629,7 @@ export const getEnergyMonitoring = async (req: Request, res: Response) => {
 
         // Group by user
         const users = await User.find({ isDeleted: false }).limit(6).lean();
-        const energyByUser = users.map((u, idx) => ({
+        const energyByUser = users.map((u: any, idx: number) => ({
             userId: u._id,
             name: u.name || u.email,
             email: u.email,
@@ -639,7 +639,7 @@ export const getEnergyMonitoring = async (req: Request, res: Response) => {
 
         // Group by device
         const devices = await Device.find({ isDeleted: false }).limit(6).lean();
-        const energyByDevice = devices.map((d, idx) => ({
+        const energyByDevice = devices.map((d: any, idx: number) => ({
             deviceId: d.deviceId,
             deviceName: d.deviceName,
             energyKwh: Number((persistentEnergy * (idx === 0 ? 0.7 : 0.1)).toFixed(2)),

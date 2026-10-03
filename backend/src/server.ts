@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { createServer } from 'http';
 import { App } from './app';
-import { connectMongo } from './config/mongo';
+import { connectDatabase } from './config/database';
 import Logger from './utils/logger.service';
 import SchedulerService from './services/scheduler.service';
 import AdminSeedService from './services/admin-seed.service';
@@ -14,8 +14,8 @@ const httpServer = createServer(app.express);
 
 (async () => {
   try {
-    await connectMongo();
-    Logger.info('MongoDB connected, ready to serve requests.');
+    await connectDatabase();
+    Logger.info('PostgreSQL connected, ready to serve requests.');
 
     // Initialize scheduled tasks
     SchedulerService.initializeSchedules();
@@ -24,7 +24,7 @@ const httpServer = createServer(app.express);
     await AdminSeedService.seedInitialData();
 
   } catch (err) {
-    Logger.error('Failed to connect to MongoDB:', err);
+    Logger.error('Failed to connect to PostgreSQL database:', err);
     process.exit(1);
   }
 

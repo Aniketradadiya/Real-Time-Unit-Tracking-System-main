@@ -1,9 +1,11 @@
-import { model, models, Schema, Types } from 'mongoose';
+import { DataTypes, Model, Op, Optional } from 'sequelize';
+import sequelize from '../config/database';
+import { createModelAdapter } from '../utils/sequelize-query-helper';
 
-export interface TelemetryDocument {
-    _id: Types.ObjectId;
+export interface TelemetryAttributes {
+    id: string;
     deviceId: string;
-    userId: Types.ObjectId;
+    userId: string;
     voltage: number;
     current: number;
     power: number;
@@ -12,28 +14,131 @@ export interface TelemetryDocument {
     powerFactor: number;
     costPerHour: number;
     timestamp: Date;
-    createdAt: Date;
+    createdAt?: Date;
 }
 
-const telemetrySchema = new Schema<TelemetryDocument>(
+export interface TelemetryCreationAttributes extends Optional<TelemetryAttributes, 'id' | 'frequency' | 'powerFactor' | 'costPerHour' | 'timestamp'> {}
+
+export class TelemetryModel extends Model<TelemetryAttributes, TelemetryCreationAttributes> implements TelemetryAttributes {
+    public id!: string;
+    public deviceId!: string;
+    public userId!: string;
+    public voltage!: number;
+    public current!: number;
+    public power!: number;
+    public energy!: number;
+    public frequency!: number;
+    public powerFactor!: number;
+    public costPerHour!: number;
+    public timestamp!: Date;
+    public readonly createdAt!: Date;
+
+    public get _id(): string {
+        return this.id;
+    }
+
+    public toJSON(): any {
+        const values: any = { ...this.get() };
+        values._id = values.id;
+        return values;
+    }
+}
+
+TelemetryModel.init(
     {
-        deviceId: { type: String, required: true, index: true },
-        userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-        voltage: { type: Number, required: true },
-        current: { type: Number, required: true },
-        power: { type: Number, required: true },
-        energy: { type: Number, required: true },
-        frequency: { type: Number, default: 50.0 },
-        powerFactor: { type: Number, default: 1.0 },
-        costPerHour: { type: Number, default: 0 },
-        timestamp: { type: Date, default: Date.now, index: true },
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        deviceId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        userId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        voltage: {
+            type: DataTypes.FLOAT,
+            allowNull: false,
+        },
+        current: {
+            type: DataTypes.FLOAT,
+            allowNull: false,
+        },
+        power: {
+            type: DataTypes.FLOAT,
+            allowNull: false,
+        },
+        energy: {
+            type: DataTypes.FLOAT,
+            allowNull: false,
+        },
+        frequency: {
+            type: DataTypes.FLOAT,
+            defaultValue: 50.0,
+        },
+        powerFactor: {
+            type: DataTypes.FLOAT,
+            defaultValue: 1.0,
+        },
+        costPerHour: {
+            type: DataTypes.FLOAT,
+            defaultValue: 0.0,
+        },
+        timestamp: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
     },
-    { timestamps: false }
+    {
+        sequelize,
+        tableName: 'telemetries',
+        timestamps: true,
+        updatedAt: false,
+    }
 );
 
-// TTL Index - automatically delete data older than 90 days
-telemetrySchema.index({ timestamp: 1 }, { expireAfterSeconds: 7776000 });
+export const Telemetry: any = createModelAdapter<TelemetryModel>(TelemetryModel);
 
-const Telemetry = models.Telemetry || model<TelemetryDocument>('Telemetry', telemetrySchema);
+// Specialized aggregate method for monthly bill checking
+Telemetry.aggregate = async function (_pipeline: any[]): Promise<any[]> {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const telemetries = await TelemetryModel.findAll({
+        where: {
+            timestamp: {
+                [Op.gte]: thirtyDaysAgo,
+            },
+        },
+    });
 
+    const groups = new Map<string, { userId: string; deviceId: string; totalCost: number; powerSum: number; count: number }>();
+
+    telemetries.forEach((t) => {
+        const key = `${t.userId}_${t.deviceId}`;
+        const existing = groups.get(key) || {
+            userId: t.userId,
+            deviceId: t.deviceId,
+            totalCost: 0,
+            powerSum: 0,
+            count: 0,
+        };
+        existing.totalCost += Number(t.costPerHour || 0);
+        existing.powerSum += Number(t.power || 0);
+        existing.count += 1;
+        groups.set(key, existing);
+    });
+
+    return Array.from(groups.values()).map((g) => ({
+        _id: {
+            userId: g.userId,
+            deviceId: g.deviceId,
+        },
+        totalCost: g.totalCost,
+        avgPower: g.count > 0 ? g.powerSum / g.count : 0,
+    }));
+};
+
+export type Telemetry = TelemetryModel;
 export default Telemetry;

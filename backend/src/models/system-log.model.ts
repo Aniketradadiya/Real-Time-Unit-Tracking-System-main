@@ -1,7 +1,9 @@
-import { model, models, Schema, Types } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
+import { createModelAdapter } from '../utils/sequelize-query-helper';
 
-export interface SystemLogDocument {
-    _id: Types.ObjectId;
+export interface SystemLogAttributes {
+    id: string;
     logId: string;
     actor: {
         userId?: string;
@@ -16,34 +18,93 @@ export interface SystemLogDocument {
     details?: any;
     result: 'SUCCESS' | 'FAILURE' | 'WARNING';
     timestamp: Date;
-    createdAt: Date;
+    createdAt?: Date;
 }
 
-const systemLogSchema = new Schema<SystemLogDocument>(
+export interface SystemLogCreationAttributes extends Optional<SystemLogAttributes, 'id' | 'ipAddress' | 'userAgent' | 'result' | 'timestamp'> {}
+
+export class SystemLogModel extends Model<SystemLogAttributes, SystemLogCreationAttributes> implements SystemLogAttributes {
+    public id!: string;
+    public logId!: string;
+    public actor!: {
+        userId?: string;
+        email?: string;
+        name?: string;
+        role?: string;
+    };
+    public action!: string;
+    public resource!: string;
+    public ipAddress?: string;
+    public userAgent?: string;
+    public details?: any;
+    public result!: 'SUCCESS' | 'FAILURE' | 'WARNING';
+    public timestamp!: Date;
+    public readonly createdAt!: Date;
+
+    public get _id(): string {
+        return this.id;
+    }
+
+    public toJSON(): any {
+        const values: any = { ...this.get() };
+        values._id = values.id;
+        return values;
+    }
+}
+
+SystemLogModel.init(
     {
-        logId: { type: String, required: true, unique: true, index: true },
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        logId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
         actor: {
-            userId: { type: String },
-            email: { type: String },
-            name: { type: String },
-            role: { type: String },
+            type: DataTypes.JSONB,
+            allowNull: false,
         },
-        action: { type: String, required: true, index: true },
-        resource: { type: String, required: true },
-        ipAddress: { type: String, default: '127.0.0.1' },
-        userAgent: { type: String, default: 'Unknown' },
-        details: { type: Schema.Types.Mixed },
+        action: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        resource: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        ipAddress: {
+            type: DataTypes.STRING,
+            defaultValue: '127.0.0.1',
+        },
+        userAgent: {
+            type: DataTypes.STRING,
+            defaultValue: 'Unknown',
+        },
+        details: {
+            type: DataTypes.JSONB,
+            allowNull: true,
+        },
         result: {
-            type: String,
-            enum: ['SUCCESS', 'FAILURE', 'WARNING'],
-            default: 'SUCCESS',
-            index: true,
+            type: DataTypes.STRING,
+            defaultValue: 'SUCCESS',
         },
-        timestamp: { type: Date, default: Date.now, index: true },
+        timestamp: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
     },
-    { timestamps: true }
+    {
+        sequelize,
+        tableName: 'system_logs',
+        timestamps: true,
+        updatedAt: false,
+    }
 );
 
-const SystemLog = models.SystemLog || model<SystemLogDocument>('SystemLog', systemLogSchema);
-
+export const SystemLog: any = createModelAdapter<SystemLogModel>(SystemLogModel);
+export type SystemLog = SystemLogModel;
 export default SystemLog;
