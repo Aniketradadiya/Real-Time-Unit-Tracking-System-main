@@ -16,11 +16,13 @@ export class App {
         this.express.use(express.json({ limit: '200mb' }));
         this.express.use(cors({
             origin: (origin, callback) => {
+                // Allow localhost and frontend URL
+                const allowedOrigins = [env.FRONT_URL];
                 const isLocalDevelopmentOrigin = origin
                     ? /^https?:\/\/localhost:\d+$/.test(origin) || /^https?:\/\/127\.0\.0\.1:\d+$/.test(origin)
-                    : true;
+                    : false;
 
-                if (isLocalDevelopmentOrigin || origin === env.FRONT_URL) {
+                if (isLocalDevelopmentOrigin || origin && allowedOrigins.includes(origin)) {
                     callback(null, true);
                     return;
                 }
