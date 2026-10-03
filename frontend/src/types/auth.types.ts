@@ -11,10 +11,17 @@ export type RegisterPayload = {
 };
 
 export type User = {
-  id: string;
+  id?: string;
+  _id?: string;
   name?: string | null;
   email: string;
   mobile?: string | null;
+  address?: string | null;
+  role?: "USER" | "ADMIN";
+  status?: "ACTIVE" | "INACTIVE";
+  energyLimit?: number;
+  lastActive?: string;
+  createdAt?: string;
 };
 
 export type AuthResponseData = {

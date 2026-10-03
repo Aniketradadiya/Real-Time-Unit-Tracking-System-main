@@ -4,6 +4,7 @@ import { App } from './app';
 import { connectMongo } from './config/mongo';
 import Logger from './utils/logger.service';
 import SchedulerService from './services/scheduler.service';
+import AdminSeedService from './services/admin-seed.service';
 import env from './utils/validate-env';
 
 const app = new App();
@@ -18,6 +19,9 @@ const httpServer = createServer(app.express);
 
     // Initialize scheduled tasks
     SchedulerService.initializeSchedules();
+
+    // Initialize Admin Seed & verification
+    await AdminSeedService.seedInitialData();
 
   } catch (err) {
     Logger.error('Failed to connect to MongoDB:', err);

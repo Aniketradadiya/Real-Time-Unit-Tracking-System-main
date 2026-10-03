@@ -28,9 +28,17 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     if ('error' in user) {
       return sendUnauthorizedResponse(res, user.error);
     }
-    const token = encrypt({ userId: user.id, email: user.email }, '1d');
+    if ((user as any).status === 'INACTIVE') {
+      return res.status(403).json({
+        success: false,
+        message: 'Account is deactivated. Please contact administrator.'
+      });
+    }
+    const userRole = (user as any).role || 'USER';
+    const token = encrypt({ userId: user.id, email: user.email, role: userRole }, '1d');
     const userResponse: Record<string, unknown> = (user as any).toJSON ? (user as any).toJSON() : { ...user };
     delete userResponse.password;
+    userResponse.role = userRole;
     return sendSuccessResponse(res, responseMessages.authentication.loginSuccess, { token, user: userResponse });
   } catch (error) {
     loggerService.error(`Login error: ${error}`);
@@ -47,7 +55,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     if (existing) {
       return sendBadRequestResponse(res, responseMessages.user.emailAlreadyRegistered);
     }
-    const userData: UserPayload = { email, mobile, name };
+    const userData: UserPayload = { email, mobile, name, role: 'USER', status: 'ACTIVE' };
     if (password) {
       userData.password = await hashAsync(password);
     }
@@ -55,9 +63,11 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     if (!newUser) {
       return sendServerErrorResponse(res, responseMessages.user.failedToCreate);
     }
-    const token = encrypt({ userId: newUser.id, email: newUser.email }, '1d');
+    const userRole = (newUser as any).role || 'USER';
+    const token = encrypt({ userId: newUser.id, email: newUser.email, role: userRole }, '1d');
     const newUserResponse: Record<string, unknown> = (newUser as any).toJSON ? (newUser as any).toJSON() : { ...newUser };
     delete newUserResponse.password;
+    newUserResponse.role = userRole;
     return sendSuccessResponse(res, responseMessages.authentication.registerSuccess, { token, user: newUserResponse });
   } catch (error) {
     loggerService.error(`Error registering user: ${error}`);

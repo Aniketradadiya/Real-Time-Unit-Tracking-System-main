@@ -8,6 +8,9 @@ export interface UserDocument {
     mobile?: string;
     address?: string;
     energyLimit: number;
+    role: 'USER' | 'ADMIN';
+    status: 'ACTIVE' | 'INACTIVE';
+    lastActive?: Date;
     isDeleted: boolean;
     createdBy?: Types.ObjectId;
     updatedBy?: Types.ObjectId;
@@ -25,6 +28,9 @@ const userSchema = new Schema<UserDocument>(
         mobile: { type: String },
         address: { type: String },
         energyLimit: { type: Number, default: 1 },
+        role: { type: String, enum: ['USER', 'ADMIN'], default: 'USER' },
+        status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' },
+        lastActive: { type: Date, default: Date.now },
         isDeleted: { type: Boolean, default: false },
         createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
         updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },

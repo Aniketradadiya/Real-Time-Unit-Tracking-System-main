@@ -3,7 +3,7 @@ import { compareAsync } from '../utils/crypto.service';
 import { responseMessages } from '../utils/response-message.service';
 import User from '../models/user.model';
 
-const userAttributes = ['_id', 'name', 'email', 'mobile'];
+const userAttributes = ['_id', 'name', 'email', 'mobile', 'role', 'status', 'energyLimit', 'lastActive'];
 
 const findUserByEmail = async (email: string) => {
   return await User.findOne({ email, isDeleted: false })
@@ -21,7 +21,7 @@ const findUserById = async (userId: string) => {
 const updateUser = async (userId: string, updateData: UserPayload, updatedBy?: string | null) => {
   const updateObj: any = { ...updateData, updatedAt: new Date() };
   if (updatedBy) updateObj.updatedBy = updatedBy;
-  await User.findByIdAndUpdate(userId, updateObj).exec();
+  return await User.findByIdAndUpdate(userId, updateObj, { new: true }).exec();
 };
 
 /** Create a new user */
@@ -42,6 +42,9 @@ const loginWithEmailAndPassword = async (email: string, password: string) => {
   if (!isPasswordValid) {
     return { error: responseMessages.authentication.invalidEmailOrPassword } as const;
   }
+
+  // Update last active
+  await User.findByIdAndUpdate(user._id, { lastActive: new Date() });
 
   return user;
 };

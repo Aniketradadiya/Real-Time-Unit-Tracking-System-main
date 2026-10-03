@@ -13,16 +13,42 @@ import AlertsPage from "../pages/AlertsPage";
 import DevicesPage from "../pages/DevicesPage";
 import GridShellLayout from "../components/dashboard/GridShellLayout";
 import ProtectedRoute from "./ProtectedRoute";
-import { getToken } from "../utils/token";
+import AdminProtectedRoute from "./AdminProtectedRoute";
+import AdminShellLayout from "../components/admin/AdminShellLayout";
+
+// Admin Pages
+import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
+import AdminUsersPage from "../pages/admin/AdminUsersPage";
+import AdminDevicesPage from "../pages/admin/AdminDevicesPage";
+import AdminEnergyPage from "../pages/admin/AdminEnergyPage";
+import AdminAlertsPage from "../pages/admin/AdminAlertsPage";
+import AdminTransactionsPage from "../pages/admin/AdminTransactionsPage";
+import AdminContractsPage from "../pages/admin/AdminContractsPage";
+import AdminMarketplacePage from "../pages/admin/AdminMarketplacePage";
+import AdminLogsPage from "../pages/admin/AdminLogsPage";
+import AdminSettingsPage from "../pages/admin/AdminSettingsPage";
+
+import { getToken, getUser } from "../utils/token";
 
 export default function AppRoutes() {
   const token = getToken();
+  const user = getUser();
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to={token ? (user?.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
+            replace
+          />
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+
+      {/* User Dashboard Routes (Accessible to authenticated users) */}
       <Route
         element={
           <ProtectedRoute>
@@ -41,7 +67,38 @@ export default function AppRoutes() {
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/devices" element={<DevicesPage />} />
       </Route>
-      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
+
+      {/* Admin Panel Routes (Strictly protected: ADMIN role only) */}
+      <Route
+        path="/admin"
+        element={
+          <AdminProtectedRoute>
+            <AdminShellLayout />
+          </AdminProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="devices" element={<AdminDevicesPage />} />
+        <Route path="energy" element={<AdminEnergyPage />} />
+        <Route path="alerts" element={<AdminAlertsPage />} />
+        <Route path="transactions" element={<AdminTransactionsPage />} />
+        <Route path="contracts" element={<AdminContractsPage />} />
+        <Route path="marketplace" element={<AdminMarketplacePage />} />
+        <Route path="logs" element={<AdminLogsPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
+      </Route>
+
+      {/* Catch-all */}
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to={token ? (user?.role === "ADMIN" ? "/admin" : "/dashboard") : "/login"}
+            replace
+          />
+        }
+      />
     </Routes>
   );
 }

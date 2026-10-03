@@ -23,12 +23,48 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             return sendUnauthorizedResponse(res, responseMessages.tokenInvalid);
         }
 
+        const userObj = userData.toJSON();
         res.locals.auth = {
-            user: userData.toJSON()
+            user: userObj
         };
-        (req as Request & { userId?: string }).userId = decoded.userId as string;
+        (req as Request & { userId?: string; user?: any }).userId = decoded.userId as string;
+        (req as Request & { userId?: string; user?: any }).user = userObj;
         next();
     } catch (error) {
         return sendUnauthorizedResponse(res, responseMessages.tokenInvalid);
+    }
+};
+
+/**
+ * Middleware to restrict access to ADMIN users only.
+ * Must be preceded by authenticateToken middleware.
+ */
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = res.locals.auth?.user || (req as any).user;
+        if (!user) {
+            return sendUnauthorizedResponse(res, 'Authentication required');
+        }
+
+        if (user.role !== 'ADMIN') {
+            return res.status(403).json({
+                success: false,
+                message: 'Forbidden: Administrator privileges required to access this resource.'
+            });
+        }
+
+        if (user.status === 'INACTIVE') {
+            return res.status(403).json({
+                success: false,
+                message: 'Account is deactivated. Access denied.'
+            });
+        }
+
+        next();
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Authorization error'
+        });
     }
 };

@@ -48,6 +48,12 @@ export default function GridShellLayout() {
           <span className="gridos-badge">{user?.email || "User Profile"}</span>
         </div>
 
+        {user?.role === "ADMIN" ? (
+          <NavLink to="/admin" className="gridos-admin-switch-link" title="Open Administrator Control Console">
+            <span>🔒 Admin Panel →</span>
+          </NavLink>
+        ) : null}
+
         <nav className="gridos-nav" aria-label="Main navigation">
           <NavLink to="/dashboard" className={navClass} end>
             <IconLayoutDashboard />

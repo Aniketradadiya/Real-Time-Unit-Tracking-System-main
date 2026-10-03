@@ -24,7 +24,7 @@ const char* WIFI_SSID     = "MyPhone";
 const char* WIFI_PASSWORD = "12345678";
 
 // 2. GridOS Backend Server URL (Configured for your local machine)
-const char* SERVER_URL    = "http://172.26.145.236:11020/api/live-data";
+const char* SERVER_URL    = "http://10.155.209.236:11020/api/live-data";
 const char* DEVICE_ID     = "ESP32-GRID-NODE-01";
 const bool USE_PZEM_SENSOR = false; // Set true only after installing PZEM-004T hardware.
 
