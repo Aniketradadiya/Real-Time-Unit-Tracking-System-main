@@ -28,22 +28,22 @@ export interface AlertAttributes {
 export interface AlertCreationAttributes extends Optional<AlertAttributes, 'id' | 'severity' | 'status' | 'detectedAt' | 'isRead'> {}
 
 export class AlertModel extends Model<AlertAttributes, AlertCreationAttributes> implements AlertAttributes {
-    public id!: string;
-    public userId!: string;
-    public deviceId!: string;
-    public deviceName!: string;
-    public alertType!: AlertType;
-    public severity!: AlertSeverity;
-    public status!: AlertStatus;
-    public title!: string;
-    public message!: string;
-    public value?: number;
-    public threshold?: number;
-    public detectedAt!: Date;
-    public resolvedAt?: Date;
-    public isRead!: boolean;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    declare id: string;
+    declare userId: string;
+    declare deviceId: string;
+    declare deviceName: string;
+    declare alertType: AlertType;
+    declare severity: AlertSeverity;
+    declare status: AlertStatus;
+    declare title: string;
+    declare message: string;
+    declare value?: number;
+    declare threshold?: number;
+    declare detectedAt: Date;
+    declare resolvedAt?: Date;
+    declare isRead: boolean;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 
     public get _id(): string {
         return this.id;
@@ -64,7 +64,7 @@ AlertModel.init(
             primaryKey: true,
         },
         userId: {
-            type: DataTypes.STRING,
+            type: DataTypes.UUID,
             allowNull: false,
         },
         deviceId: {

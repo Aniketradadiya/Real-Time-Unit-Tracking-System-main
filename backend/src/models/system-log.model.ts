@@ -24,22 +24,22 @@ export interface SystemLogAttributes {
 export interface SystemLogCreationAttributes extends Optional<SystemLogAttributes, 'id' | 'ipAddress' | 'userAgent' | 'result' | 'timestamp'> {}
 
 export class SystemLogModel extends Model<SystemLogAttributes, SystemLogCreationAttributes> implements SystemLogAttributes {
-    public id!: string;
-    public logId!: string;
-    public actor!: {
+    declare id: string;
+    declare logId: string;
+    declare actor: {
         userId?: string;
         email?: string;
         name?: string;
         role?: string;
     };
-    public action!: string;
-    public resource!: string;
-    public ipAddress?: string;
-    public userAgent?: string;
-    public details?: any;
-    public result!: 'SUCCESS' | 'FAILURE' | 'WARNING';
-    public timestamp!: Date;
-    public readonly createdAt!: Date;
+    declare action: string;
+    declare resource: string;
+    declare ipAddress?: string;
+    declare userAgent?: string;
+    declare details?: any;
+    declare result: 'SUCCESS' | 'FAILURE' | 'WARNING';
+    declare timestamp: Date;
+    declare readonly createdAt: Date;
 
     public get _id(): string {
         return this.id;

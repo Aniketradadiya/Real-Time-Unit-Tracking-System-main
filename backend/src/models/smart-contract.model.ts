@@ -21,19 +21,19 @@ export interface SmartContractAttributes {
 export interface SmartContractCreationAttributes extends Optional<SmartContractAttributes, 'id' | 'network' | 'deploymentStatus' | 'owner' | 'deploymentDate' | 'compilerVersion' | 'eventsCount' | 'isActive'> {}
 
 export class SmartContractModel extends Model<SmartContractAttributes, SmartContractCreationAttributes> implements SmartContractAttributes {
-    public id!: string;
-    public contractAddress!: string;
-    public name!: string;
-    public network!: string;
-    public deploymentStatus!: 'DEPLOYED' | 'PENDING' | 'FAILED' | 'DISABLED';
-    public owner!: string;
-    public deploymentDate!: Date;
-    public txHash!: string;
-    public compilerVersion?: string;
-    public eventsCount!: number;
-    public isActive!: boolean;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    declare id: string;
+    declare contractAddress: string;
+    declare name: string;
+    declare network: string;
+    declare deploymentStatus: 'DEPLOYED' | 'PENDING' | 'FAILED' | 'DISABLED';
+    declare owner: string;
+    declare deploymentDate: Date;
+    declare txHash: string;
+    declare compilerVersion?: string;
+    declare eventsCount: number;
+    declare isActive: boolean;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 
     public get _id(): string {
         return this.id;

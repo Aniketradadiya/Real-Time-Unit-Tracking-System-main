@@ -38,24 +38,25 @@ class AlertDetectionService {
         }
     ) {
         try {
-            // Resolve a valid userId
+            // Resolve a valid UUID for userId
+            const isUuid = typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
             let resolvedUserId: string;
-            if (userId && userId !== 'admin' && userId.length >= 8) {
+            if (isUuid) {
                 resolvedUserId = userId;
             } else {
                 const device = await Device.findOne({ deviceId });
-                if (device?.userId) {
+                if (device?.userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(device.userId)) {
                     resolvedUserId = device.userId;
                 } else {
                     let user = await User.findOne({ isDeleted: false });
                     if (!user) {
                         user = await User.create({
                             name: 'Admin',
-                            email: 'admin@example.com',
+                            email: 'admin@rtut.com',
                             energyLimit: 100,
                         });
                     }
-                    resolvedUserId = user._id || user.id;
+                    resolvedUserId = user.id || user._id;
                 }
             }
 

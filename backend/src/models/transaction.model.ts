@@ -26,21 +26,21 @@ export interface TransactionAttributes {
 export interface TransactionCreationAttributes extends Optional<TransactionAttributes, 'id' | 'energyUnits' | 'status' | 'paymentMethod'> {}
 
 export class TransactionModel extends Model<TransactionAttributes, TransactionCreationAttributes> implements TransactionAttributes {
-    public id!: string;
-    public transactionId!: string;
-    public userId?: string;
-    public userName?: string;
-    public userEmail?: string;
-    public type!: TransactionType;
-    public amount!: number;
-    public energyUnits!: number;
-    public status!: TransactionStatus;
-    public paymentMethod!: string;
-    public txHash?: string;
-    public description?: string;
-    public metadata?: Record<string, any>;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    declare id: string;
+    declare transactionId: string;
+    declare userId?: string;
+    declare userName?: string;
+    declare userEmail?: string;
+    declare type: TransactionType;
+    declare amount: number;
+    declare energyUnits: number;
+    declare status: TransactionStatus;
+    declare paymentMethod: string;
+    declare txHash?: string;
+    declare description?: string;
+    declare metadata?: Record<string, any>;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 
     public get _id(): string {
         return this.id;
@@ -66,7 +66,7 @@ TransactionModel.init(
             unique: true,
         },
         userId: {
-            type: DataTypes.STRING,
+            type: DataTypes.UUID,
             allowNull: true,
         },
         userName: {

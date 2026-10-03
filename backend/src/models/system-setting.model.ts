@@ -42,19 +42,19 @@ export interface SystemSettingAttributes {
 export interface SystemSettingCreationAttributes extends Optional<SystemSettingAttributes, 'id' | 'key' | 'systemName' | 'energyMonitoringInterval' | 'defaultEnergyLimit' | 'tariffRatePerKwh'> {}
 
 export class SystemSettingModel extends Model<SystemSettingAttributes, SystemSettingCreationAttributes> implements SystemSettingAttributes {
-    public id!: string;
-    public key!: string;
-    public systemName!: string;
-    public energyMonitoringInterval!: number;
-    public defaultEnergyLimit!: number;
-    public tariffRatePerKwh!: number;
-    public alertThresholds?: any;
-    public userSettings?: any;
-    public deviceSettings?: any;
-    public alertSettings?: any;
-    public securitySettings?: any;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    declare id: string;
+    declare key: string;
+    declare systemName: string;
+    declare energyMonitoringInterval: number;
+    declare defaultEnergyLimit: number;
+    declare tariffRatePerKwh: number;
+    declare alertThresholds?: any;
+    declare userSettings?: any;
+    declare deviceSettings?: any;
+    declare alertSettings?: any;
+    declare securitySettings?: any;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 
     public get _id(): string {
         return this.id;
@@ -77,7 +77,6 @@ SystemSettingModel.init(
         key: {
             type: DataTypes.STRING,
             defaultValue: 'primary',
-            unique: true,
         },
         systemName: {
             type: DataTypes.STRING,
@@ -141,6 +140,12 @@ SystemSettingModel.init(
         sequelize,
         tableName: 'system_settings',
         timestamps: true,
+        indexes: [
+            {
+                unique: true,
+                fields: ['key'],
+            },
+        ],
     }
 );
 

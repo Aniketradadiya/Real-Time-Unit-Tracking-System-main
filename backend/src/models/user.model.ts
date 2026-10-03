@@ -25,23 +25,23 @@ export interface UserAttributes {
 export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'energyLimit' | 'role' | 'status' | 'isDeleted'> {}
 
 export class UserModel extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-    public id!: string;
-    public name?: string;
-    public email?: string;
-    public password?: string;
-    public mobile?: string;
-    public address?: string;
-    public energyLimit!: number;
-    public role!: 'USER' | 'ADMIN';
-    public status!: 'ACTIVE' | 'INACTIVE';
-    public lastActive?: Date;
-    public isDeleted!: boolean;
-    public createdBy?: string;
-    public updatedBy?: string;
-    public deletedBy?: string;
-    public deletedAt?: Date;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    declare id: string;
+    declare name?: string;
+    declare email?: string;
+    declare password?: string;
+    declare mobile?: string;
+    declare address?: string;
+    declare energyLimit: number;
+    declare role: 'USER' | 'ADMIN';
+    declare status: 'ACTIVE' | 'INACTIVE';
+    declare lastActive?: Date;
+    declare isDeleted: boolean;
+    declare createdBy?: string;
+    declare updatedBy?: string;
+    declare deletedBy?: string;
+    declare deletedAt?: Date;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 
     public get _id(): string {
         return this.id;

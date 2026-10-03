@@ -20,18 +20,18 @@ export interface DeviceAttributes {
 export interface DeviceCreationAttributes extends Optional<DeviceAttributes, 'id' | 'deviceType' | 'status' | 'lastHeartbeat' | 'powerThreshold' | 'isDeleted'> {}
 
 export class DeviceModel extends Model<DeviceAttributes, DeviceCreationAttributes> implements DeviceAttributes {
-    public id!: string;
-    public deviceId!: string;
-    public userId!: string;
-    public deviceName!: string;
-    public location?: string;
-    public deviceType!: 'METER' | 'EQUIPMENT';
-    public status!: 'ACTIVE' | 'INACTIVE' | 'FAULT';
-    public lastHeartbeat!: Date;
-    public powerThreshold!: number;
-    public isDeleted!: boolean;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    declare id: string;
+    declare deviceId: string;
+    declare userId: string;
+    declare deviceName: string;
+    declare location?: string;
+    declare deviceType: 'METER' | 'EQUIPMENT';
+    declare status: 'ACTIVE' | 'INACTIVE' | 'FAULT';
+    declare lastHeartbeat: Date;
+    declare powerThreshold: number;
+    declare isDeleted: boolean;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 
     public get _id(): string {
         return this.id;
@@ -57,7 +57,7 @@ DeviceModel.init(
             unique: true,
         },
         userId: {
-            type: DataTypes.STRING,
+            type: DataTypes.UUID,
             allowNull: false,
         },
         deviceName: {

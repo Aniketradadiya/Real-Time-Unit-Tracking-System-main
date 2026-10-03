@@ -20,18 +20,18 @@ export interface TelemetryAttributes {
 export interface TelemetryCreationAttributes extends Optional<TelemetryAttributes, 'id' | 'frequency' | 'powerFactor' | 'costPerHour' | 'timestamp'> {}
 
 export class TelemetryModel extends Model<TelemetryAttributes, TelemetryCreationAttributes> implements TelemetryAttributes {
-    public id!: string;
-    public deviceId!: string;
-    public userId!: string;
-    public voltage!: number;
-    public current!: number;
-    public power!: number;
-    public energy!: number;
-    public frequency!: number;
-    public powerFactor!: number;
-    public costPerHour!: number;
-    public timestamp!: Date;
-    public readonly createdAt!: Date;
+    declare id: string;
+    declare deviceId: string;
+    declare userId: string;
+    declare voltage: number;
+    declare current: number;
+    declare power: number;
+    declare energy: number;
+    declare frequency: number;
+    declare powerFactor: number;
+    declare costPerHour: number;
+    declare timestamp: Date;
+    declare readonly createdAt: Date;
 
     public get _id(): string {
         return this.id;
@@ -56,7 +56,7 @@ TelemetryModel.init(
             allowNull: false,
         },
         userId: {
-            type: DataTypes.STRING,
+            type: DataTypes.UUID,
             allowNull: false,
         },
         voltage: {

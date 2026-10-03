@@ -45,7 +45,7 @@ export const connectDatabase = async (): Promise<void> => {
         initAssociations();
 
         // Sync all models with PostgreSQL database
-        await sequelize.sync({ alter: true });
+        await sequelize.sync();
         Logger.info('PostgreSQL database synchronized with models.');
     } catch (err) {
         Logger.error('Failed to connect to PostgreSQL database:', err);
